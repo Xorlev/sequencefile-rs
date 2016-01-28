@@ -1,0 +1,12 @@
+[package]
+name = "sequencefile"
+version = "0.1.0"
+authors = ["Michael Rose <elementation@gmail.com>"]
+
+[dependencies]
+log = "0.3"
+byteorder = "0.4"
+flate2 = "0.2"
+
+[dev-dependencies]
+env_logger = "0.3"
