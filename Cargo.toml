@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Michael Rose <elementation@gmail.com>"]
 description = "Library for reading Hadoop sequencefiles."
 keywords = ["hadoop", "sequencefile"]
+repository = "https://github.com/xorlev/rust-sequencefile"
 license = "MIT/Apache-2.0"
 
 [dependencies]
