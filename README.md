@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Xorlev/rust-sequencefile.svg?branch=master)](https://travis-ci.org/Xorlev/rust-sequencefile)
+
 # rust-sequencefile
 Hadoop SequenceFile library for Rust
 
