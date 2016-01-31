@@ -13,6 +13,9 @@ const SYNC_SIZE: usize = 16;
 
 pub type Item = (ByteString, ByteString);
 
+// Reader for a SequenceFile
+// Iterable, returns a tuple of (ByteString, ByteString) for now until
+// a Writables analog is developed
 pub struct Reader<R: io::Read> {
     header: Header,
     reader: R,
@@ -21,7 +24,8 @@ pub struct Reader<R: io::Read> {
 
 impl<R: io::Read> Reader<R> {
     pub fn new(mut r: R) -> Reader<R> {
-        let header = read_sequence_header(&mut r).unwrap();
+        // TODO: handle this
+        let header = read_header(&mut r).unwrap();
 
         Reader {
             header: header,
@@ -31,7 +35,7 @@ impl<R: io::Read> Reader<R> {
     }
 }
 
-fn read_sequence_header<R: io::Read>(reader: &mut R) -> Result<Header> {
+fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
     let mut magic = [0; 3];
     try!(reader.read(&mut magic));
     if magic != MAGIC.as_bytes() {
@@ -44,7 +48,7 @@ fn read_sequence_header<R: io::Read>(reader: &mut R) -> Result<Header> {
 
     // Version 4 - block compression
     // Version 5 - custom compression codecs
-    // Version 6 -
+    // Version 6 - metadata
     if version < 5 {
         return Err(Error::VersionNotSupported(version));
     }
@@ -56,15 +60,16 @@ fn read_sequence_header<R: io::Read>(reader: &mut R) -> Result<Header> {
     try!(reader.read(&mut flags));
 
     let compression_type: CompressionType = {
-        let value_compression = flags[0] as u8;
+        let compression = flags[0] as u8;
         let block_compression = flags[1] as u8;
 
-        if block_compression > 0 {
-            CompressionType::Block
-        } else if value_compression > 0 {
-            CompressionType::Value
-        } else {
-            CompressionType::None
+        // first byte: compression t/f
+        // second byte: block t/f
+        match (compression, block_compression) {
+            (1, 1) => CompressionType::Block,
+            (1, 0) => CompressionType::Value,
+            (0, 0) => CompressionType::None,
+            _ => return Err(Error::CompressionTypeUnknown("Undefined type".to_string())),
         }
     };
 
@@ -88,7 +93,7 @@ fn read_sequence_header<R: io::Read>(reader: &mut R) -> Result<Header> {
         compression_codec: compression_codec,
         key_class: key_class,
         value_class: value_class,
-        metadata: HashMap::new(),
+        metadata: HashMap::new(), // TODO
         sync_marker: sync_marker.to_vec(),
     })
 }
@@ -105,7 +110,7 @@ impl<R: io::Read> Iterator for Reader<R> {
         if kv_length == -1 {
             to_opt!(self.reader.read(&mut last_sync_marker));
             if last_sync_marker.to_vec() != self.header.sync_marker {
-                panic!("Sync marker doesn't match!");
+                panic!(Error::SyncMarkerMismatch);
             }
 
             kv_length = to_opt!(self.reader.read_i32::<BigEndian>()) as isize;
@@ -136,8 +141,7 @@ fn read_kv<R: io::Read>(kv_length: isize,
                         -> Result<(Vec<u8>, Vec<u8>)> {
     let k_length = reader.read_i32::<BigEndian>().unwrap() as usize;
 
-    // kvs have 4 bytes of junk
-    let k_start = 0; // unless LongWritable!
+    let k_start = 0;
     let k_end = k_start + (k_length - 0);
     let v_start = k_end;
     let v_end = v_start + (kv_length as usize - k_length);
@@ -147,15 +151,14 @@ fn read_kv<R: io::Read>(kv_length: isize,
     // re-implement common writables
     // core interface: Iterator<(u[8], u[8])> or a KV struct
     // mixin interface on KVstruct could extract key/value from
-    // // bytes
+    // bytes
+    // debug!("k_start: {:?}, k_end: {:?}, v_start: {:?}, v_end: {:?}",
+    //          k_start,
+    //          k_end,
+    //          v_start,
+    //          v_end);
     //
-    println!("k_start: {:?}, k_end: {:?}, v_start: {:?}, v_end: {:?}",
-             k_start,
-             k_end,
-             v_start,
-             v_end);
-
-    println!("{:?}", header);
+    // debug!("{:?}", header);
 
     let mut buffer = vec![0; kv_length as usize];
     try!(reader.read(&mut buffer));

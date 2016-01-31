@@ -18,6 +18,7 @@ Prototype status! Currently supports reading out your garden-variety sequence fi
 as well as deflate/value compressed files.
 
 There's a lot more to do:
+- [ ] Varint decoding
 - [ ] Block compression
 - [ ] Gzip support
 - [ ] Snappy support
