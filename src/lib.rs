@@ -1,10 +1,26 @@
 //! Prototype streaming library for reading Hadoop sequencefiles
+//!
+//! # Example
+//! ```ignore
+//! let path = Path::new("/path/to/seqfile");
+//! let file = File::open(&path).unwrap();
+//!
+//! let seqfile = match sequencefile::Reader::new(file) {
+//!   Ok(val) => val,
+//!   Err(err) => panic!("Failed to open sequence file: {}", err),
+//! };
+//!
+//! for kv in seqfile {
+//!     println!("{:?}", kv);
+//! }
+//! ```
 
 #![crate_name = "sequencefile"]
 #![deny(missing_docs)]
 
 extern crate byteorder;
 extern crate flate2;
+extern crate bzip2;
 
 use std::collections::HashMap;
 

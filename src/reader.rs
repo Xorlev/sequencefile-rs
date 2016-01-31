@@ -217,6 +217,7 @@ mod tests {
 
     use byteorder::{ByteOrder, BigEndian};
 
+
     #[test]
     fn reads_standard_sequencefile() {
         let kvs = main_read("test_data/abc_long_text_none.seq").unwrap();
@@ -245,6 +246,15 @@ mod tests {
     }
 
     #[test]
+    fn reads_bzip2_record() {
+        let kvs = main_read("test_data/abc_long_text_bzip2_record.seq").unwrap();
+
+        assert_eq!(26, kvs.len());
+        assert_eq!((0, "A".to_string()), kvs[0]);
+        assert_eq!((25, "Z".to_string()), kvs[25]);
+    }
+
+    #[test]
     #[should_panic(expected = "unsupported codec")]
     fn reads_snappy_record() {
         match main_read("test_data/abc_long_text_snappy_record.seq") {
@@ -266,6 +276,15 @@ mod tests {
     #[should_panic(expected = "not yet implemented")]
     fn reads_gzip_block() {
         match main_read("test_data/abc_long_text_gzip_block.seq") {
+            Ok(val) => val,
+            Err(err) => panic!("Failed to open sequence file: {}", err),
+        };
+    }
+
+    #[test]
+    #[should_panic(expected = "not yet implemented")]
+    fn reads_bzip2_block() {
+        match main_read("test_data/abc_long_text_bzip2_block.seq") {
             Ok(val) => val,
             Err(err) => panic!("Failed to open sequence file: {}", err),
         };

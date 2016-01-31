@@ -1,12 +1,13 @@
 use std::io::prelude::*;
+use std::io;
 use std::convert::AsRef;
 use flate2::read::{GzDecoder, ZlibDecoder};
-use errors::{Error, Result};
+use bzip2::reader::BzDecompressor;
+use errors::Result;
 
 pub const DEFAULT_CODEC: &'static str = "org.apache.hadoop.io.compress.DefaultCodec";
 pub const GZIP_CODEC: &'static str = "org.apache.hadoop.io.compress.GzipCodec";
-pub const SNAPPY_CODEC: &'static str = "org.apache.hadoop.io.compress.SnappyCodec";
-pub const BZIP2_CODEC: &'static str = "org.apache.hadoop.io.compress.Bzip2Codec";
+pub const BZIP2_CODEC: &'static str = "org.apache.hadoop.io.compress.BZip2Codec";
 
 /// Type of compression used on the sequencefile.
 #[derive(Debug, PartialEq)]
@@ -27,8 +28,6 @@ pub enum Codec {
     Default,
     /// Gzip, standard
     Gzip,
-    /// Snappy compression. This is Hadoop-flavored Snappy vs. libsnappy
-    Snappy,
     /// Bzip2 compression.
     Bzip2,
 }
@@ -38,30 +37,22 @@ pub fn codec(codec: &String) -> Option<Codec> {
     match codec.as_ref() {
         DEFAULT_CODEC => Some(Codec::Default),
         GZIP_CODEC => Some(Codec::Gzip),
-        SNAPPY_CODEC => None, // unsupported
-        BZIP2_CODEC => None, // unsupported
+        BZIP2_CODEC => Some(Codec::Bzip2),
         _ => None,
     }
 }
 
 pub fn decompressor(codec: &Codec, buffer: &[u8]) -> Result<Vec<u8>> {
     match *codec {
-        Codec::Default => {
-            let mut decoder = ZlibDecoder::new(buffer);
-
-            let mut buf = Vec::new();
-            try!(decoder.read_to_end(&mut buf));
-
-            Ok(buf)
-        }
-        Codec::Gzip => {
-            let mut decoder = try!(GzDecoder::new(buffer));
-
-            let mut buf = Vec::new();
-            try!(decoder.read_to_end(&mut buf));
-
-            Ok(buf)
-        }
-        _ => Err(Error::CompressionTypeUnknown(format!("codec not implemented: {:?}", codec))),
+        Codec::Default => Ok(try!(decompress(&mut ZlibDecoder::new(buffer)))),
+        Codec::Gzip => Ok(try!(decompress(&mut try!(GzDecoder::new(buffer))))),
+        Codec::Bzip2 => Ok(try!(decompress(&mut BzDecompressor::new(buffer)))),
     }
+}
+
+fn decompress<R: io::Read>(decompressor: &mut R) -> Result<Vec<u8>> {
+    let mut buf = Vec::new();
+    try!(decompressor.read_to_end(&mut buf));
+
+    Ok(buf)
 }
