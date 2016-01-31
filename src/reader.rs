@@ -1,27 +1,32 @@
+//! Implementation and structs for a sequencefile reader
+
 use byteorder::{ReadBytesExt, BigEndian, ByteOrder};
 use std::io;
 use std::io::prelude::*;
 use std::collections::HashMap;
 use std::str;
 use errors::{Error, Result};
-use {Header, CompressionType, ByteString};
+use {Header, ByteString};
 use compress;
+use compress::CompressionType;
 
 const MAGIC: &'static str = "SEQ";
 const SYNC_SIZE: usize = 16;
 
-pub type Item = (ByteString, ByteString);
-
-// Reader for a SequenceFile
-// Iterable, returns a tuple of (ByteString, ByteString) for now until
-// a Writables analog is developed
+/// Provides a streaming interface fronted by an Iterator
+/// Only buffers when `CompressionType::Block` is used.
 pub struct Reader<R: io::Read> {
     header: Header,
     reader: R,
-    block_buffer: Vec<Item>,
+    block_buffer: Vec<(ByteString, ByteString)>,
 }
 
 impl<R: io::Read> Reader<R> {
+    /// Create a new Reader from an io::Read
+    ///
+    /// # Failures
+    /// Returns an `Error` if sequencefile header is malformed, e.g. unsupported version or
+    /// invalid compression algorithm
     pub fn new(mut r: R) -> Result<Reader<R>> {
         // TODO: handle this
         let header = try!(read_header(&mut r));
@@ -48,7 +53,7 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
     // Version 4 - block compression
     // Version 5 - custom compression codecs
     // Version 6 - metadata
-    if version < 5 {
+    if version < 5 || version > 6 {
         return Err(Error::VersionNotSupported(version));
     }
 
@@ -69,14 +74,14 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
             (1, 0) => CompressionType::Record,
             (0, 0) => CompressionType::None,
             _ => {
-                return Err(Error::CompressionTypeUnknown("Undefined compression_type".to_string()))
+                return Err(Error::CompressionTypeUnknown("undefined compression type".to_string()))
             }
         }
     };
 
     match compression_type {
         CompressionType::Block => {
-            return Err(Error::CompressionTypeUnknown("Block compression not yet implemented"
+            return Err(Error::CompressionTypeUnknown("block compression not yet implemented"
                                                          .to_string()))
         }
         _ => (),
@@ -87,7 +92,7 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
 
         match compress::codec(&codec) {
             Some(codec) => Some(codec),
-            None => return Err(Error::CompressionTypeUnknown(codec)),
+            None => return Err(Error::UnsupportedCodec(codec)),
         }
     } else {
         None
@@ -115,7 +120,7 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
 impl<R: io::Read> Iterator for Reader<R> {
     type Item = (ByteString, ByteString);
 
-    fn next(&mut self) -> Option<Item> {
+    fn next(&mut self) -> Option<(ByteString, ByteString)> {
         let mut last_sync_marker = [0; SYNC_SIZE];
         let mut kv_length = to_opt!(self.reader.read_i32::<BigEndian>()) as isize;
         // ^ todo: Varint reader
@@ -240,7 +245,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "unexpected compression codec")]
+    #[should_panic(expected = "unsupported codec")]
     fn reads_snappy_record() {
         match main_read("test_data/abc_long_text_snappy_record.seq") {
             Ok(val) => val,

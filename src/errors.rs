@@ -8,6 +8,7 @@ pub enum Error {
     BadMagic(String),
     VersionNotSupported(u16),
     CompressionTypeUnknown(String),
+    UnsupportedCodec(String),
     SyncMarkerMismatch,
     IO(io::Error),
     BadEncoding(str::Utf8Error),
@@ -26,8 +27,9 @@ impl fmt::Display for Error {
             Error::VersionNotSupported(ref v) => write!(f, "unexpected version: '{}'", v),
             Error::SyncMarkerMismatch => write!(f, "sync marker mismatch"),
             Error::CompressionTypeUnknown(ref codec) => {
-                write!(f, "unexpected compression codec: '{}'", codec)
+                write!(f, "unexpected compression type: '{}'", codec)
             }
+            Error::UnsupportedCodec(ref codec) => write!(f, "unsupported codec: '{}'", codec),
             Error::BadEncoding(ref e) => write!(f, "utf8 error: {}", e),
             Error::UnexpectedDecoderError(ref e) => write!(f, "decoding error: {}", e),
         }
@@ -37,10 +39,11 @@ impl fmt::Display for Error {
 impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
-            Error::BadMagic(_) => "Bad or missing magic header.",
-            Error::VersionNotSupported(_) => "Bad version number.",
-            Error::SyncMarkerMismatch => "Sync marker mismatch",
-            Error::CompressionTypeUnknown(_) => "Unable to decompress, unknown codec.",
+            Error::BadMagic(_) => "bad or missing magic header",
+            Error::VersionNotSupported(_) => "bad version number",
+            Error::SyncMarkerMismatch => "sync marker mismatch",
+            Error::CompressionTypeUnknown(_) => "unable to decompress, unknown codec",
+            Error::UnsupportedCodec(_) => "unsupported codec",
             Error::IO(ref e) => e.description(),
             Error::BadEncoding(ref e) => e.description(),
             Error::UnexpectedDecoderError(ref e) => e.description(),
