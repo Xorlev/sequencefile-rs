@@ -14,11 +14,16 @@ for kv in seqfile {
 ```
 
 ## Status
-Prototype status! There's a lot more to do:
+Prototype status! Currently supports reading out your garden-variety sequence file. Handles uncompressed sequencefiles
+as well as deflate/value compressed files.
+
+There's a lot more to do:
 - [ ] Block compression
+- [ ] Gzip support
+- [ ] Snappy support
 - [ ] 'Writables', e.g. generic deserialization for common Hadoop writable types
-- [ ] Writer
 - [ ] Zero-copy implementation.
 - [ ] Sequencefile metadata
 - [ ] Better error handling
 - [ ] Tests
+- [ ] Writer
