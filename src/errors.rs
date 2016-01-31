@@ -1,4 +1,5 @@
 use std::{io, str, error, fmt, result};
+use byteorder;
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -10,6 +11,7 @@ pub enum Error {
     SyncMarkerMismatch,
     IO(io::Error),
     BadEncoding(str::Utf8Error),
+    UnexpectedDecoderError(byteorder::Error),
 }
 
 impl fmt::Display for Error {
@@ -28,6 +30,7 @@ impl fmt::Display for Error {
                 write!(f, "Unexpected compression codec: '{}'", codec)
             }
             Error::BadEncoding(ref e) => write!(f, "UTF8 Error: {}", e),
+            Error::UnexpectedDecoderError(ref e) => write!(f, "Decoding Error: {}", e),
         }
     }
 }
@@ -41,6 +44,7 @@ impl error::Error for Error {
             Error::CompressionTypeUnknown(_) => "Unable to decompress, unknown codec.",
             Error::IO(ref e) => e.description(),
             Error::BadEncoding(ref e) => e.description(),
+            Error::UnexpectedDecoderError(ref e) => e.description(),
         }
     }
 
@@ -56,6 +60,13 @@ impl error::Error for Error {
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Error {
         Error::IO(err)
+    }
+}
+
+
+impl From<byteorder::Error> for Error {
+    fn from(err: byteorder::Error) -> Error {
+        Error::UnexpectedDecoderError(err)
     }
 }
 

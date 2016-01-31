@@ -53,8 +53,8 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
         return Err(Error::VersionNotSupported(version));
     }
 
-    let key_class = read_string(reader).unwrap();
-    let value_class = read_string(reader).unwrap();
+    let key_class = try!(read_string(reader));
+    let value_class = try!(read_string(reader));
 
     let mut flags = [0; 2];
     try!(reader.read(&mut flags));
@@ -79,7 +79,7 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
         None
     };
 
-    let pairs = reader.read_u32::<BigEndian>().unwrap();
+    let pairs = try!(reader.read_u32::<BigEndian>());
     for _ in 0..pairs {
         // TODO: do stuff
     }
@@ -139,7 +139,7 @@ fn read_kv<R: io::Read>(kv_length: isize,
                         header: &Header,
                         reader: &mut R)
                         -> Result<(Vec<u8>, Vec<u8>)> {
-    let k_length = reader.read_i32::<BigEndian>().unwrap() as usize;
+    let k_length = try!(reader.read_i32::<BigEndian>()) as usize;
 
     let k_start = 0;
     let k_end = k_start + (k_length - 0);
@@ -185,7 +185,7 @@ fn read_kv<R: io::Read>(kv_length: isize,
 
 fn read_string<R: io::Read>(reader: &mut R) -> Result<String> {
     // read one byte, value len
-    let value_length = reader.read_u8().unwrap() as usize;
+    let value_length = try!(reader.read_u8()) as usize;
     let mut string = vec![0; value_length];
 
     try!(reader.read(&mut string));
