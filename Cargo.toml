@@ -1,6 +1,6 @@
 [package]
 name = "sequencefile"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Michael Rose <elementation@gmail.com>"]
 description = "Library for reading Hadoop sequencefiles."
 keywords = ["hadoop", "sequencefile"]

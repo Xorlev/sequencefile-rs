@@ -19,18 +19,17 @@ impl fmt::Display for Error {
         match *self {
             Error::BadMagic(ref m) => {
                 write!(f,
-                       "Bad or missing magic string, found: '{}'. Are you sure this is a sequence \
-                        file?'",
+                       "bad or missing magic string, found: '{}'. Is this a sequence file?",
                        m)
             }
-            Error::IO(_) => write!(f, "I/O Error: {}", self),
-            Error::VersionNotSupported(ref v) => write!(f, "Unexpected version: '{}'", v),
-            Error::SyncMarkerMismatch => write!(f, "Sync marker mismatch"),
+            Error::IO(_) => write!(f, "i/o error: {}", self),
+            Error::VersionNotSupported(ref v) => write!(f, "unexpected version: '{}'", v),
+            Error::SyncMarkerMismatch => write!(f, "sync marker mismatch"),
             Error::CompressionTypeUnknown(ref codec) => {
-                write!(f, "Unexpected compression codec: '{}'", codec)
+                write!(f, "unexpected compression codec: '{}'", codec)
             }
-            Error::BadEncoding(ref e) => write!(f, "UTF8 Error: {}", e),
-            Error::UnexpectedDecoderError(ref e) => write!(f, "Decoding Error: {}", e),
+            Error::BadEncoding(ref e) => write!(f, "utf8 error: {}", e),
+            Error::UnexpectedDecoderError(ref e) => write!(f, "decoding error: {}", e),
         }
     }
 }
@@ -52,6 +51,7 @@ impl error::Error for Error {
         match *self {
             Error::IO(ref e) => Some(e),
             Error::BadEncoding(ref e) => Some(e),
+            Error::UnexpectedDecoderError(ref e) => Some(e),
             _ => None,
         }
     }

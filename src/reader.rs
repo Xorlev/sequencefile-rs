@@ -3,6 +3,7 @@ use std::io;
 use std::io::prelude::*;
 use std::collections::HashMap;
 use std::str;
+use std::convert::AsRef;
 use flate2::read::ZlibDecoder;
 use errors::{Error, Result};
 use {Header, CompressionType, ByteString};
@@ -23,15 +24,15 @@ pub struct Reader<R: io::Read> {
 }
 
 impl<R: io::Read> Reader<R> {
-    pub fn new(mut r: R) -> Reader<R> {
+    pub fn new(mut r: R) -> Result<Reader<R>> {
         // TODO: handle this
-        let header = read_header(&mut r).unwrap();
+        let header = try!(read_header(&mut r));
 
-        Reader {
+        Ok(Reader {
             header: header,
             reader: r,
             block_buffer: Vec::new(),
-        }
+        })
     }
 }
 
@@ -67,14 +68,29 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
         // second byte: block t/f
         match (compression, block_compression) {
             (1, 1) => CompressionType::Block,
-            (1, 0) => CompressionType::Value,
+            (1, 0) => CompressionType::Record,
             (0, 0) => CompressionType::None,
-            _ => return Err(Error::CompressionTypeUnknown("Undefined type".to_string())),
+            _ => {
+                return Err(Error::CompressionTypeUnknown("Undefined compression_type".to_string()))
+            }
         }
     };
 
+    match compression_type {
+        CompressionType::Block => {
+            return Err(Error::CompressionTypeUnknown("Block compression not yet implemented"
+                                                         .to_string()))
+        }
+        _ => (),
+    };
+
     let compression_codec = if compression_type != CompressionType::None {
-        Some(try!(read_string(reader)))
+        let codec = try!(read_string(reader));
+
+        match codec.as_ref() {
+            DEFAULT_CODEC => Some(DEFAULT_CODEC.to_string()),
+            _ => return Err(Error::CompressionTypeUnknown(codec)),
+        }
     } else {
         None
     };
@@ -165,7 +181,7 @@ fn read_kv<R: io::Read>(kv_length: isize,
 
     let key = buffer[k_start..k_end].to_vec();
 
-    if header.compression_type == CompressionType::Value {
+    if header.compression_type == CompressionType::Record {
         if header.compression_codec == Some(DEFAULT_CODEC.to_string()) {
             let mut decoder = ZlibDecoder::new(&buffer[v_start..v_end]);
 
@@ -174,7 +190,8 @@ fn read_kv<R: io::Read>(kv_length: isize,
 
             Ok((key, buf))
         } else {
-            return Err(Error::CompressionTypeUnknown("x".to_string()));
+            let codec = header.compression_codec.clone().map(|c| c.to_string());
+            return Err(Error::CompressionTypeUnknown(codec.unwrap_or("None".to_string())));
         }
     } else {
         let value = buffer[v_start..v_end].to_vec();
@@ -190,4 +207,82 @@ fn read_string<R: io::Read>(reader: &mut R) -> Result<String> {
 
     try!(reader.read(&mut string));
     str::from_utf8(&string).map(|v| v.to_owned()).map_err(|e| Error::BadEncoding(e))
+}
+
+#[cfg(test)]
+mod tests {
+    use reader;
+    use errors::{Error, Result};
+    use std::path::Path;
+    use std::fs::File;
+
+    use byteorder::{ByteOrder, BigEndian};
+
+    #[test]
+    fn reads_standard_sequencefile() {
+        let kvs = main_read("test_data/abc_long_text_none.seq").unwrap();
+
+        assert_eq!(26, kvs.len());
+        assert_eq!((0, "A".to_string()), kvs[0]);
+        assert_eq!((25, "Z".to_string()), kvs[25]);
+    }
+
+    #[test]
+    #[should_panic(expected = "unexpected compression codec")]
+    fn reads_gzip_record() {
+        match main_read("test_data/abc_long_text_gzip_record.seq") {
+            Ok(val) => val,
+            Err(err) => panic!("Failed to open sequence file: {}", err),
+        };
+    }
+
+    #[test]
+    #[should_panic(expected = "unexpected compression codec")]
+    fn reads_snappy_record() {
+        match main_read("test_data/abc_long_text_snappy_record.seq") {
+            Ok(val) => val,
+            Err(err) => panic!("Failed to open sequence file: {}", err),
+        };
+    }
+
+    #[test]
+    #[should_panic(expected = "not yet implemented")]
+    fn reads_gzip_block() {
+        match main_read("test_data/abc_long_text_gzip_block.seq") {
+            Ok(val) => val,
+            Err(err) => panic!("Failed to open sequence file: {}", err),
+        };
+    }
+
+    #[test]
+    #[should_panic(expected = "not yet implemented")]
+    fn reads_snappy_block() {
+        match main_read("test_data/abc_long_text_snappy_block.seq") {
+            Ok(val) => val,
+            Err(err) => panic!("Failed to open sequence file: {}", err),
+        };
+    }
+
+    #[test]
+    #[should_panic(expected = "bad or missing magic")]
+    fn read_checks_magic() {
+        match main_read("test_data/bad_magic.seq") {
+            Ok(val) => val,
+            Err(err) => panic!("Failed to open sequence file: {}", err),
+        };
+    }
+
+    fn main_read(filename: &str) -> Result<Vec<(i64, String)>> {
+        let path = Path::new(filename);
+
+        let file = try!(File::open(&path));
+        let seqfile = try!(reader::Reader::new(file));
+
+        let kvs = seqfile.map(|(key, value)| {
+            (BigEndian::read_i64(&key),
+             String::from_utf8_lossy(&value[2..value.len()]).to_string())
+        });
+
+        Ok(kvs.collect())
+    }
 }

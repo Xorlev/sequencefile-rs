@@ -7,7 +7,7 @@ Hadoop SequenceFile library for Rust
 Prototype status! I'm in the process of learning Rust. :) Feedback appreciated.
 
 Currently supports reading out your garden-variety sequence file. Handles uncompressed sequencefiles
-as well as deflate/value compressed files. The most common type of sequence file, block compressed,
+as well as record compressed files (deflate only). The most common type of sequence file, block compressed,
 isn't supported yet.
 
 There's a lot more to do:
@@ -29,7 +29,10 @@ There's a lot more to do:
 let path = Path::new("/path/to/seqfile");
 let file = File::open(&path).unwrap();
 
-let seqfile = sequencefile::Reader::new(file);
+let seqfile = match sequencefile::Reader::new(file) {
+  Ok(val) => val,
+  Err(err) => panic!("Failed to open sequence file: {}", err),
+}
 
 for kv in seqfile {
     println!("{:?}", kv);
