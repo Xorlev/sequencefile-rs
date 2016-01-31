@@ -19,7 +19,7 @@ pub type ByteString = Vec<u8>;
 pub struct Header {
     version: u16,
     compression_type: CompressionType,
-    compression_codec: Option<String>,
+    compression_codec: Option<Codec>,
     key_class: String,
     value_class: String,
     metadata: HashMap<String, String>,
@@ -33,7 +33,16 @@ pub enum CompressionType {
     Block,
 }
 
+#[derive(Debug)]
+pub enum Codec {
+    Default,
+    Gzip,
+    Snappy,
+}
+
+
 // modules
+mod compress;
 mod errors;
 pub mod reader;
 

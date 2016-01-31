@@ -3,13 +3,11 @@ use std::io;
 use std::io::prelude::*;
 use std::collections::HashMap;
 use std::str;
-use std::convert::AsRef;
-use flate2::read::ZlibDecoder;
 use errors::{Error, Result};
 use {Header, CompressionType, ByteString};
+use compress;
 
 const MAGIC: &'static str = "SEQ";
-const DEFAULT_CODEC: &'static str = "org.apache.hadoop.io.compress.DefaultCodec";
 const SYNC_SIZE: usize = 16;
 
 pub type Item = (ByteString, ByteString);
@@ -87,9 +85,9 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
     let compression_codec = if compression_type != CompressionType::None {
         let codec = try!(read_string(reader));
 
-        match codec.as_ref() {
-            DEFAULT_CODEC => Some(DEFAULT_CODEC.to_string()),
-            _ => return Err(Error::CompressionTypeUnknown(codec)),
+        match compress::codec(&codec) {
+            Some(codec) => Some(codec),
+            None => return Err(Error::CompressionTypeUnknown(codec)),
         }
     } else {
         None
@@ -182,16 +180,12 @@ fn read_kv<R: io::Read>(kv_length: isize,
     let key = buffer[k_start..k_end].to_vec();
 
     if header.compression_type == CompressionType::Record {
-        if header.compression_codec == Some(DEFAULT_CODEC.to_string()) {
-            let mut decoder = ZlibDecoder::new(&buffer[v_start..v_end]);
+        if let Some(ref codec) = header.compression_codec {
+            let decompressed = try!(compress::decompressor(codec, &buffer[v_start..v_end]));
 
-            let mut buf = Vec::new();
-            try!(decoder.read_to_end(&mut buf));
-
-            Ok((key, buf))
+            Ok((key, decompressed))
         } else {
-            let codec = header.compression_codec.clone().map(|c| c.to_string());
-            return Err(Error::CompressionTypeUnknown(codec.unwrap_or("None".to_string())));
+            panic!("WAT")
         }
     } else {
         let value = buffer[v_start..v_end].to_vec();
@@ -212,7 +206,7 @@ fn read_string<R: io::Read>(reader: &mut R) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use reader;
-    use errors::{Error, Result};
+    use errors::Result;
     use std::path::Path;
     use std::fs::File;
 
@@ -237,12 +231,12 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "unexpected compression codec")]
     fn reads_gzip_record() {
-        match main_read("test_data/abc_long_text_gzip_record.seq") {
-            Ok(val) => val,
-            Err(err) => panic!("Failed to open sequence file: {}", err),
-        };
+        let kvs = main_read("test_data/abc_long_text_gzip_record.seq").unwrap();
+
+        assert_eq!(26, kvs.len());
+        assert_eq!((0, "A".to_string()), kvs[0]);
+        assert_eq!((25, "Z".to_string()), kvs[25]);
     }
 
     #[test]

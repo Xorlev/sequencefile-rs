@@ -14,13 +14,13 @@ There's a lot more to do:
 - [ ] Varint decoding
  - Block sizes are written with Varints
 - [ ] Block decompression
-- [ ] Gzip support
+- [X] Gzip support
 - [ ] Snappy support
 - [ ] 'Writables', e.g. generic deserialization for common Hadoop writable types
  - TODO: "Reflection" of some sort to allow registration of custom types.
 - [ ] Zero-copy implementation.
 - [ ] Sequencefile metadata
-- [ ] Better error handling
+- [X] Better error handling
 - [ ] Tests
 - [ ] Writer
 
