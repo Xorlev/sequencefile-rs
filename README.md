@@ -9,11 +9,14 @@ Hadoop SequenceFile library for Rust
 ```toml
 # Cargo.toml
 [dependencies]
-sequencefile = "0.1"
+sequencefile = "0.1.2"
 ```
 
 ## Status
 Prototype status! I'm in the process of learning Rust. :) Feedback appreciated.
+
+Unfortunately that means the API will change. If you depend on this crate, please fully qualify your versions
+for now.
 
 Currently supports reading out your garden-variety sequence file. Handles uncompressed sequencefiles
 as well as record compressed files (deflate only). The most common type of sequence file, block compressed,
