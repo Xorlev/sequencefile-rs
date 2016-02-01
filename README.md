@@ -3,6 +3,14 @@
 # rust-sequencefile
 Hadoop SequenceFile library for Rust
 
+[Documentation](https://xorlev.github.io/rust-sequencefile/)
+
+```toml
+# Cargo.toml
+[dependencies]
+sequencefile = "0.1"
+```
+
 ## Status
 Prototype status! I'm in the process of learning Rust. :) Feedback appreciated.
 
@@ -21,6 +29,7 @@ There's a lot more to do:
  - TODO: "Reflection" of some sort to allow registration of custom types.
 - [ ] Zero-copy implementation.
 - [ ] Sequencefile metadata
+- [ ] Better documentation
 - [X] Better error handling
 - [X] Tests
 - [ ] Writer
@@ -39,3 +48,9 @@ for kv in seqfile {
     println!("{:?}", kv);
 }
 ```
+
+## License
+rust-sequencefile is primarily distributed under the terms of both the MIT license and the Apache License (Version 2.0),
+with portions covered by various BSD-like licenses.
+
+See LICENSE-APACHE, and LICENSE-MIT for details.
