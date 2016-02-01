@@ -1,12 +1,12 @@
 //! Implementation and structs for a sequencefile reader
 
-use byteorder::{ReadBytesExt, BigEndian, ByteOrder};
+use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
 use std::io;
 use std::io::prelude::*;
 use std::collections::HashMap;
 use std::str;
 use errors::{Error, Result};
-use {Header, ByteString};
+use {ByteString, Header};
 use compress;
 use compress::CompressionType;
 
@@ -15,6 +15,7 @@ const SYNC_SIZE: usize = 16;
 
 /// Provides a streaming interface fronted by an Iterator
 /// Only buffers when `CompressionType::Block` is used.
+#[derive(Debug)]
 pub struct Reader<R: io::Read> {
     header: Header,
     reader: R,
@@ -64,12 +65,9 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
     try!(reader.read(&mut flags));
 
     let compression_type: CompressionType = {
-        let compression = flags[0] as u8;
-        let block_compression = flags[1] as u8;
-
         // first byte: compression t/f
         // second byte: block t/f
-        match (compression, block_compression) {
+        match (flags[0], flags[1]) {
             (1, 1) => CompressionType::Block,
             (1, 0) => CompressionType::Record,
             (0, 0) => CompressionType::None,
@@ -215,7 +213,7 @@ mod tests {
     use std::path::Path;
     use std::fs::File;
 
-    use byteorder::{ByteOrder, BigEndian};
+    use byteorder::{BigEndian, ByteOrder};
 
 
     #[test]

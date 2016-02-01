@@ -16,11 +16,16 @@
 //! ```
 
 #![crate_name = "sequencefile"]
-#![deny(missing_docs)]
+#![deny(missing_docs,
+        missing_debug_implementations, missing_copy_implementations,
+        trivial_casts, trivial_numeric_casts,
+        unsafe_code,
+        unstable_features,
+        unused_import_braces)]
 
 extern crate byteorder;
-extern crate flate2;
 extern crate bzip2;
+extern crate flate2;
 
 use std::collections::HashMap;
 
@@ -40,8 +45,8 @@ pub type ByteString = Vec<u8>;
 #[derive(Debug)]
 pub struct Header {
     version: u16,
-    compression_type: compress::CompressionType,
-    compression_codec: Option<compress::Codec>,
+    compression_type: CompressionType,
+    compression_codec: Option<Codec>,
     key_class: String,
     value_class: String,
     metadata: HashMap<String, String>,
@@ -56,3 +61,4 @@ pub mod reader;
 
 // exports
 pub use reader::*;
+pub use compress::{Codec, CompressionType};

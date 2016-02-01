@@ -10,7 +10,7 @@ pub const GZIP_CODEC: &'static str = "org.apache.hadoop.io.compress.GzipCodec";
 pub const BZIP2_CODEC: &'static str = "org.apache.hadoop.io.compress.BZip2Codec";
 
 /// Type of compression used on the sequencefile.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum CompressionType {
     /// No compression.
     None,
@@ -22,7 +22,7 @@ pub enum CompressionType {
 }
 
 /// Compression codec
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Codec {
     /// Deflate is default
     Default,

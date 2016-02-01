@@ -1,4 +1,4 @@
-use std::{io, str, error, fmt, result};
+use std::{error, fmt, io, result, str};
 use byteorder;
 
 pub type Result<T> = result::Result<T, Error>;
