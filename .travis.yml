@@ -16,7 +16,7 @@ script:
   travis-cargo build &&
   travis-cargo test &&
   travis-cargo bench &&
-  travis-cargo --only stable --no-deps doc
+  travis-cargo --only stable doc -- --no-deps
 addons:
   apt:
     packages:
