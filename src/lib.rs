@@ -56,6 +56,7 @@ pub struct Header {
 // modules
 mod compress;
 mod errors;
+mod util;
 
 pub mod reader;
 
