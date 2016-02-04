@@ -9,6 +9,7 @@ use errors::{Error, Result};
 use {ByteString, Header};
 use compress;
 use compress::CompressionType;
+use util::ZeroCompress;
 
 const MAGIC: &'static str = "SEQ";
 const SYNC_SIZE: usize = 16;
@@ -77,14 +78,6 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
         }
     };
 
-    match compression_type {
-        CompressionType::Block => {
-            return Err(Error::CompressionTypeUnknown("block compression not yet implemented"
-                                                         .to_string()))
-        }
-        _ => (),
-    };
-
     let compression_codec = if compression_type != CompressionType::None {
         let codec = try!(read_string(reader));
 
@@ -119,35 +112,134 @@ impl<R: io::Read> Iterator for Reader<R> {
     type Item = (ByteString, ByteString);
 
     fn next(&mut self) -> Option<(ByteString, ByteString)> {
-        let mut last_sync_marker = [0; SYNC_SIZE];
-        let mut kv_length = to_opt!(self.reader.read_i32::<BigEndian>()) as isize;
-        // ^ todo: Varint reader
+        if self.block_buffer.len() == 0 || self.header.compression_type != CompressionType::Block {
+            let mut last_sync_marker = [0; SYNC_SIZE];
+            let kv_length = to_opt!(self.reader.read_i32::<BigEndian>()) as i64;
+            // ^ todo: Varint reader
+            // let blocksize = to_opt!(self.reader.decode_vint64());
+            println!("kv_length: {:?}", kv_length);
+            // let mut kv_length = blocksize;
 
-        // handle sync marker
-        if kv_length == -1 {
-            to_opt!(self.reader.read(&mut last_sync_marker));
-            if last_sync_marker.to_vec() != self.header.sync_marker {
-                panic!(Error::SyncMarkerMismatch);
+            // handle sync marker
+            if kv_length == -1 {
+                to_opt!(self.reader.read(&mut last_sync_marker));
+                if last_sync_marker.to_vec() != self.header.sync_marker {
+                    panic!("Sync marker mismatch");
+                }
+
+                // kv_length = to_opt!(self.reader.decode_vint64());
+                //
+                // if kv_length == -1 {
+                //     return None;
+                // }
             }
 
-            kv_length = to_opt!(self.reader.read_i32::<BigEndian>()) as isize;
 
-            if kv_length == -1 {
-                return None;
+            if self.header.compression_type != CompressionType::Block {
+                let (key, value) = to_opt!(read_kv(kv_length as isize,
+                                                   &self.header,
+                                                   &mut self.reader));
+
+                return Some((key, value));
             }
         }
 
         if self.header.compression_type == CompressionType::Block {
             if self.block_buffer.len() == 0 {
-                unimplemented!();
-            } else {
-                return self.block_buffer.pop();
+                let kv_count = to_opt!(self.reader.decode_vint64()) as usize;
+                println!("kv_count: {:?}", kv_count);
+                let key_length_buffer_size = to_opt!(self.reader.decode_vint64());
+                println!("key_length_buffer_size: {:?}", key_length_buffer_size);
+                let mut key_length_buffer = vec![0u8; key_length_buffer_size as usize];
+                to_opt!(self.reader.read(&mut key_length_buffer));
+
+
+                let decompressed_keys_lengths = compress::decompressor(&self.header
+                                                                            .compression_codec
+                                                                            .unwrap(),
+                                                                       key_length_buffer.as_ref());
+
+                let mut c = io::Cursor::new(decompressed_keys_lengths.unwrap());
+                // let mut b = Vec::new();
+                let mut lens: Vec<usize> = Vec::new();
+                for _ in 0..kv_count {
+                    let len = c.decode_vint64().unwrap() as usize;
+                    println!("len: {:?}", len);
+                    lens.push(len);
+                }
+
+
+                let key_length_buffer_size = to_opt!(self.reader.decode_vint64());
+                println!("key_length_buffer_size: {:?}", key_length_buffer_size);
+                let mut key_length_buffer = vec![0u8; key_length_buffer_size as usize];
+                to_opt!(self.reader.read(&mut key_length_buffer));
+                let decompressed_keys = compress::decompressor(&self.header
+                                                                    .compression_codec
+                                                                    .unwrap(),
+                                                               key_length_buffer.as_ref());
+
+                let mut c = io::Cursor::new(decompressed_keys.unwrap());
+                let mut keys: Vec<ByteString> = Vec::new();
+                for i in 0..kv_count {
+                    // println!("key: {:?}", c.read_i64::<BigEndian>());
+                    let mut k = vec![0; lens[i]];
+                    to_opt!(c.read(&mut k)); // todo errors
+                    keys.push(k)
+                }
+
+
+                let val_length_buffer_size = to_opt!(self.reader.decode_vint64());
+                println!("val_length_buffer_size: {:?}", val_length_buffer_size);
+                let mut val_length_buffer = vec![0u8; val_length_buffer_size as usize];
+                to_opt!(self.reader.read(&mut val_length_buffer));
+
+
+                let decompressed_val_lengths = compress::decompressor(&self.header
+                                                                           .compression_codec
+                                                                           .unwrap(),
+                                                                      val_length_buffer.as_ref());
+
+                let mut c = io::Cursor::new(decompressed_val_lengths.unwrap());
+                // let mut b = Vec::new();
+                let mut lens: Vec<usize> = Vec::new();
+                for _ in 0..kv_count {
+                    let len = c.decode_vint64().unwrap() as usize;
+                    println!("val_len: {:?}", len);
+                    lens.push(len);
+                }
+
+                println!("{:?}", lens);
+
+
+                let val_length_buffer_size = to_opt!(self.reader.decode_vint64());
+                println!("val_length_buffer_size: {:?}", val_length_buffer_size);
+                let mut val_length_buffer = vec![0u8; val_length_buffer_size as usize];
+                to_opt!(self.reader.read(&mut val_length_buffer));
+                let decompressed_vals = compress::decompressor(&self.header
+                                                                    .compression_codec
+                                                                    .unwrap(),
+                                                               val_length_buffer.as_ref());
+
+                let mut c = io::Cursor::new(decompressed_vals.unwrap());
+                for i in 0..kv_count {
+                    let mut v = vec![0; lens[i]]; //todo: reuse
+                    to_opt!(c.read(&mut v));
+
+                    self.block_buffer.push((keys[i].clone(), v));
+                }
             }
+
+            let len = self.block_buffer.len();
+            if len > 0 {
+                println!("Some");
+                return Some(self.block_buffer.remove(0));
+            } else {
+                println!("None");
+                return None;
+            }
+        } else {
+            None
         }
-
-        let (key, value) = to_opt!(read_kv(kv_length, &self.header, &mut self.reader));
-
-        Some((key, value))
     }
 }
 
@@ -156,44 +248,54 @@ fn read_kv<R: io::Read>(kv_length: isize,
                         header: &Header,
                         reader: &mut R)
                         -> Result<(Vec<u8>, Vec<u8>)> {
-    let k_length = try!(reader.read_i32::<BigEndian>()) as usize;
 
-    let k_start = 0;
-    let k_end = k_start + (k_length - 0);
-    let v_start = k_end;
-    let v_end = v_start + (kv_length as usize - k_length);
+    if header.compression_type == CompressionType::Block {
+        let blocksize = try!(reader.decode_vint64());
+        println!("{:?}", blocksize);
 
-    // TODO: DataInput/DataOutput semantics per type
-    // e.g. impl LongWritable...
-    // re-implement common writables
-    // core interface: Iterator<(u[8], u[8])> or a KV struct
-    // mixin interface on KVstruct could extract key/value from
-    // bytes
-    // debug!("k_start: {:?}, k_end: {:?}, v_start: {:?}, v_end: {:?}",
-    //          k_start,
-    //          k_end,
-    //          v_start,
-    //          v_end);
-    //
-    // debug!("{:?}", header);
-
-    let mut buffer = vec![0; kv_length as usize];
-    try!(reader.read(&mut buffer));
-
-    let key = buffer[k_start..k_end].to_vec();
-
-    if header.compression_type == CompressionType::Record {
-        if let Some(ref codec) = header.compression_codec {
-            let decompressed = try!(compress::decompressor(codec, &buffer[v_start..v_end]));
-
-            Ok((key, decompressed))
-        } else {
-            panic!("WAT")
-        }
-    } else {
-        let value = buffer[v_start..v_end].to_vec();
-
+        let key = Vec::new();
+        let value = Vec::new();
         Ok((key, value))
+    } else {
+        let k_length = try!(reader.read_i32::<BigEndian>()) as usize;
+
+        let k_start = 0;
+        let k_end = k_start + (k_length - 0);
+        let v_start = k_end;
+        let v_end = v_start + (kv_length as usize - k_length);
+
+        // TODO: DataInput/DataOutput semantics per type
+        // e.g. impl LongWritable...
+        // re-implement common writables
+        // core interface: Iterator<(u[8], u[8])> or a KV struct
+        // mixin interface on KVstruct could extract key/value from
+        // bytes
+        println!("k_start: {:?}, k_end: {:?}, v_start: {:?}, v_end: {:?}",
+                 k_start,
+                 k_end,
+                 v_start,
+                 v_end);
+
+        println!("{:?}", header);
+
+        let mut buffer = vec![0; kv_length as usize];
+        try!(reader.read(&mut buffer));
+
+        let key = buffer[k_start..k_end].to_vec();
+
+        if header.compression_type == CompressionType::Record {
+            if let Some(ref codec) = header.compression_codec {
+                let decompressed = try!(compress::decompressor(codec, &buffer[v_start..v_end]));
+
+                Ok((key, decompressed))
+            } else {
+                panic!("WAT")
+            }
+        } else {
+            let value = buffer[v_start..v_end].to_vec();
+
+            Ok((key, value))
+        }
     }
 }
 
@@ -262,34 +364,34 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "not yet implemented")]
     fn reads_deflate_block() {
-        match main_read("test_data/abc_long_text_deflate_block.seq") {
-            Ok(val) => val,
-            Err(err) => panic!("Failed to open sequence file: {}", err),
-        };
+        let kvs = main_read("test_data/abc_long_text_deflate_block.seq").unwrap();
+
+        assert_eq!(26, kvs.len());
+        assert_eq!((0, "A".to_string()), kvs[0]);
+        assert_eq!((25, "Z".to_string()), kvs[25]);
     }
 
     #[test]
-    #[should_panic(expected = "not yet implemented")]
     fn reads_gzip_block() {
-        match main_read("test_data/abc_long_text_gzip_block.seq") {
-            Ok(val) => val,
-            Err(err) => panic!("Failed to open sequence file: {}", err),
-        };
+        let kvs = main_read("test_data/abc_long_text_gzip_block.seq").unwrap();
+
+        assert_eq!(26, kvs.len());
+        assert_eq!((0, "A".to_string()), kvs[0]);
+        assert_eq!((25, "Z".to_string()), kvs[25]);
     }
 
     #[test]
-    #[should_panic(expected = "not yet implemented")]
     fn reads_bzip2_block() {
-        match main_read("test_data/abc_long_text_bzip2_block.seq") {
-            Ok(val) => val,
-            Err(err) => panic!("Failed to open sequence file: {}", err),
-        };
+        let kvs = main_read("test_data/abc_long_text_bzip2_block.seq").unwrap();
+
+        assert_eq!(26, kvs.len());
+        assert_eq!((0, "A".to_string()), kvs[0]);
+        assert_eq!((25, "Z".to_string()), kvs[25]);
     }
 
     #[test]
-    #[should_panic(expected = "not yet implemented")]
+    #[should_panic(expected = "unsupported codec")]
     fn reads_snappy_block() {
         match main_read("test_data/abc_long_text_snappy_block.seq") {
             Ok(val) => val,
