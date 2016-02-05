@@ -9,7 +9,7 @@ Hadoop SequenceFile library for Rust
 ```toml
 # Cargo.toml
 [dependencies]
-sequencefile = "0.1.2"
+sequencefile = "0.1.3"
 ```
 
 ## Status
@@ -23,20 +23,22 @@ as well as record compressed files (deflate only). The most common type of seque
 isn't supported yet.
 
 There's a lot more to do:
-- [ ] Varint decoding
+- [X] Varint decoding
  - Block sizes are written with Varints
-- [ ] Block decompression
+- [X] Block decompression
 - [X] Gzip support
 - [X] Bzip2 support
+- [X] Sequencefile metadata
+- [X] Better error handling
+- [X] Tests
+- [ ] More tests
+- [ ] Better documentation
 - [ ] Snappy support
 - [ ] 'Writables', e.g. generic deserialization for common Hadoop writable types
  - TODO: "Reflection" of some sort to allow registration of custom types.
-- [ ] Zero-copy implementation.
-- [ ] Sequencefile metadata
-- [ ] Better documentation
-- [X] Better error handling
-- [X] Tests
 - [ ] Writer
+- [ ] Zero-copy implementation.
+
 
 ## Usage
 ```rust

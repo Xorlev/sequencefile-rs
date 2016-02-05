@@ -28,7 +28,7 @@ pub enum Codec {
     Default,
     /// Gzip, standard
     Gzip,
-    /// Bzip2 compression.
+    /// Bzip2 compression
     Bzip2,
 }
 
@@ -44,9 +44,9 @@ pub fn codec(codec: &String) -> Option<Codec> {
 
 pub fn decompressor(codec: &Codec, buffer: &[u8]) -> Result<Vec<u8>> {
     match *codec {
-        Codec::Default => Ok(try!(decompress(&mut ZlibDecoder::new(buffer)))),
-        Codec::Gzip => Ok(try!(decompress(&mut try!(GzDecoder::new(buffer))))),
-        Codec::Bzip2 => Ok(try!(decompress(&mut BzDecompressor::new(buffer)))),
+        Codec::Default => decompress(&mut ZlibDecoder::new(buffer)),
+        Codec::Gzip => decompress(&mut try!(GzDecoder::new(buffer))),
+        Codec::Bzip2 => decompress(&mut BzDecompressor::new(buffer)),
     }
 }
 
