@@ -238,54 +238,44 @@ fn read_kv<R: io::Read>(kv_length: isize,
                         header: &Header,
                         reader: &mut R)
                         -> Result<(Vec<u8>, Vec<u8>)> {
+    let k_length = try!(reader.read_i32::<BigEndian>()) as usize;
 
-    if header.compression_type == CompressionType::Block {
-        let blocksize = try!(reader.decode_vint64());
-        println!("{:?}", blocksize);
+    let k_start = 0;
+    let k_end = k_start + (k_length - 0);
+    let v_start = k_end;
+    let v_end = v_start + (kv_length as usize - k_length);
 
-        let key = Vec::new();
-        let value = Vec::new();
-        Ok((key, value))
-    } else {
-        let k_length = try!(reader.read_i32::<BigEndian>()) as usize;
+    // TODO: DataInput/DataOutput semantics per type
+    // e.g. impl LongWritable...
+    // re-implement common writables
+    // core interface: Iterator<(u[8], u[8])> or a KV struct
+    // mixin interface on KVstruct could extract key/value from
+    // bytes
+    // println!("k_start: {:?}, k_end: {:?}, v_start: {:?}, v_end: {:?}",
+    //  k_start,
+    //  k_end,
+    //  v_start,
+    //  v_end);
 
-        let k_start = 0;
-        let k_end = k_start + (k_length - 0);
-        let v_start = k_end;
-        let v_end = v_start + (kv_length as usize - k_length);
+    // println!("{:?}", header);
 
-        // TODO: DataInput/DataOutput semantics per type
-        // e.g. impl LongWritable...
-        // re-implement common writables
-        // core interface: Iterator<(u[8], u[8])> or a KV struct
-        // mixin interface on KVstruct could extract key/value from
-        // bytes
-        println!("k_start: {:?}, k_end: {:?}, v_start: {:?}, v_end: {:?}",
-                 k_start,
-                 k_end,
-                 v_start,
-                 v_end);
+    let mut buffer = vec![0; kv_length as usize];
+    try!(reader.read(&mut buffer));
 
-        println!("{:?}", header);
+    let key = buffer[k_start..k_end].to_vec();
 
-        let mut buffer = vec![0; kv_length as usize];
-        try!(reader.read(&mut buffer));
+    if header.compression_type == CompressionType::Record {
+        if let Some(ref codec) = header.compression_codec {
+            let decompressed = try!(compress::decompressor(codec, &buffer[v_start..v_end]));
 
-        let key = buffer[k_start..k_end].to_vec();
-
-        if header.compression_type == CompressionType::Record {
-            if let Some(ref codec) = header.compression_codec {
-                let decompressed = try!(compress::decompressor(codec, &buffer[v_start..v_end]));
-
-                Ok((key, decompressed))
-            } else {
-                panic!("WAT")
-            }
+            Ok((key, decompressed))
         } else {
-            let value = buffer[v_start..v_end].to_vec();
-
-            Ok((key, value))
+            panic!("WAT")
         }
+    } else {
+        let value = buffer[v_start..v_end].to_vec();
+
+        Ok((key, value))
     }
 }
 
