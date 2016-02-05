@@ -4,7 +4,7 @@ use errors::Result;
 pub trait ZeroCompress : Read {
     fn decode_vint64(&mut self) -> Result<i64> {
         let mut raw_buffer = vec![0u8; 1];
-        try!(self.read(&mut raw_buffer));
+        try!(self.read_exact(&mut raw_buffer));
 
         let value = raw_buffer[0] as i8;
         let len = if value >= -112 {
@@ -20,7 +20,7 @@ pub trait ZeroCompress : Read {
             val = value as i64;
         } else {
             for _ in 0..(len - 1) {
-                try!(self.read(&mut raw_buffer));
+                try!(self.read_exact(&mut raw_buffer));
                 val = val << 8;
                 val = val | (raw_buffer[0] as i64 & 0xFF)
             }
