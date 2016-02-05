@@ -44,12 +44,26 @@ pub type ByteString = Vec<u8>;
 /// and some internal state for properly decoding
 #[derive(Debug)]
 pub struct Header {
-    version: u16,
-    compression_type: CompressionType,
-    compression_codec: Option<Codec>,
-    key_class: String,
-    value_class: String,
-    metadata: HashMap<String, String>,
+    /// Sequencefile version
+    /// Version 4 - block compression
+    /// Version 5 - custom compression codecs
+    /// Version 6 - metadata
+    pub version: u16,
+
+    /// Type of value compression
+    pub compression_type: CompressionType,
+
+    /// Codec, if any
+    pub compression_codec: Option<Codec>,
+
+    /// Fully-qualified Java class of key Writable
+    pub key_class: String,
+
+    /// Fully-qualified Java class of value Writable
+    pub value_class: String,
+
+    /// K-V metadata on sequencefile
+    pub metadata: HashMap<String, String>,
     sync_marker: ByteString,
 }
 

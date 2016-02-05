@@ -10,7 +10,7 @@ Hadoop SequenceFile library for Rust
 ```toml
 # Cargo.toml
 [dependencies]
-sequencefile = "0.1.3"
+sequencefile = "0.1.4"
 ```
 
 ## Status
@@ -38,6 +38,7 @@ There's a lot more to do:
 - [ ] 'Writables', e.g. generic deserialization for common Hadoop writable types
  - TODO: "Reflection" of some sort to allow registration of custom types.
 - [ ] Writer
+- [ ] Gracefully handle version 4 sequencefiles
 - [ ] Zero-copy implementation.
 
 
