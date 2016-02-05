@@ -89,9 +89,20 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
         None
     };
 
-    let pairs = try!(reader.read_u32::<BigEndian>());
-    for _ in 0..pairs {
-        // TODO: do stuff
+    let pair_count = try!(reader.read_u32::<BigEndian>());
+    let mut pairs: HashMap<String, String> = HashMap::new();
+    for _ in 0..pair_count {
+        let key_len = try!(reader.decode_vint64()) as usize;
+        let mut key_buf = vec![0; key_len];
+        try!(reader.read_exact(&mut key_buf));
+        let key = String::from_utf8_lossy(&key_buf).to_string();
+
+        let val_len = try!(reader.decode_vint64()) as usize;
+        let mut val_buf = vec![0; val_len];
+        try!(reader.read_exact(&mut val_buf));
+        let val = String::from_utf8_lossy(&val_buf).to_string();
+
+        pairs.insert(key, val);
     }
 
     let mut sync_marker = [0; SYNC_SIZE];
@@ -103,7 +114,7 @@ fn read_header<R: io::Read>(reader: &mut R) -> Result<Header> {
         compression_codec: compression_codec,
         key_class: key_class,
         value_class: value_class,
-        metadata: HashMap::new(), // TODO
+        metadata: pairs,
         sync_marker: sync_marker.to_vec(),
     })
 }
@@ -328,6 +339,16 @@ mod tests {
     }
 
     #[test]
+    fn reads_metadata() {
+        let sf = reader_for("test_data/metadata.seq").unwrap();
+
+        println!("{:?}", sf.header.metadata);
+
+        assert_eq!("b", sf.header.metadata.get("a").unwrap());
+        assert_eq!("z", sf.header.metadata.get("y").unwrap());
+    }
+
+    #[test]
     fn reads_deflate_record() {
         let kvs = main_read("test_data/abc_long_text_deflate_record.seq").unwrap();
 
@@ -408,11 +429,15 @@ mod tests {
         };
     }
 
-    fn main_read(filename: &str) -> Result<Vec<(i64, String)>> {
+    fn reader_for(filename: &str) -> Result<reader::Reader<File>> {
         let path = Path::new(filename);
-
         let file = try!(File::open(&path));
-        let seqfile = try!(reader::Reader::new(file));
+
+        Ok(try!(reader::Reader::new(file)))
+    }
+
+    fn main_read(filename: &str) -> Result<Vec<(i64, String)>> {
+        let seqfile = try!(reader_for(filename));
 
         let kvs = seqfile.map(|(key, value)| {
             (BigEndian::read_i64(&key),
