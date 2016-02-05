@@ -10,7 +10,7 @@ Hadoop SequenceFile library for Rust
 ```toml
 # Cargo.toml
 [dependencies]
-sequencefile = "0.1.4"
+sequencefile = "0.1.3"
 ```
 
 ## Status
