@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Codec","Compression codec"],["CompressionType","Type of compression used on the sequencefile."]]});

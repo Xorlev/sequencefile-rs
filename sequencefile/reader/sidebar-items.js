@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Reader","Provides a streaming interface fronted by an Iterator Only buffers when `CompressionType::Block` is used."]]});
