@@ -32,9 +32,12 @@ There's a lot more to do:
 - [X] Sequencefile metadata
 - [X] Better error handling
 - [X] Tests
+- [ ] Better error handling2
+ - Iterator should return Result<(ByteString, ByteString)>
 - [ ] More tests
 - [ ] Better documentation
 - [ ] Snappy support
+- [ ] CRC file support
 - [ ] 'Writables', e.g. generic deserialization for common Hadoop writable types
  - TODO: "Reflection" of some sort to allow registration of custom types.
 - [ ] Writer

@@ -29,14 +29,6 @@ extern crate flate2;
 
 use std::collections::HashMap;
 
-/// Converts a Result<T,E> to an Option<T>
-macro_rules! to_opt {
-    ($e:expr) => (match $e {
-        Ok(val) => val,
-        Err(_) => return None,
-    });
-}
-
 /// Convenience typedef
 pub type ByteString = Vec<u8>;
 

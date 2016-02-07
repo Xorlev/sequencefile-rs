@@ -10,6 +10,7 @@ pub enum Error {
     CompressionTypeUnknown(String),
     UnsupportedCodec(String),
     SyncMarkerMismatch,
+    EOF,
     IO(io::Error),
     BadEncoding(str::Utf8Error),
     UnexpectedDecoderError(byteorder::Error),
@@ -26,6 +27,7 @@ impl fmt::Display for Error {
             Error::IO(_) => write!(f, "i/o error: {}", self),
             Error::VersionNotSupported(ref v) => write!(f, "unexpected version: '{}'", v),
             Error::SyncMarkerMismatch => write!(f, "sync marker mismatch"),
+            Error::EOF => write!(f, "end of file"),
             Error::CompressionTypeUnknown(ref codec) => {
                 write!(f, "unexpected compression type: '{}'", codec)
             }
@@ -42,6 +44,7 @@ impl error::Error for Error {
             Error::BadMagic(_) => "bad or missing magic header",
             Error::VersionNotSupported(_) => "bad version number",
             Error::SyncMarkerMismatch => "sync marker mismatch",
+            Error::EOF => "End of file",
             Error::CompressionTypeUnknown(_) => "unable to decompress, unknown codec",
             Error::UnsupportedCodec(_) => "unsupported codec",
             Error::IO(ref e) => e.description(),
