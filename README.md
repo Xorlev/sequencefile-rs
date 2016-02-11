@@ -44,6 +44,10 @@ There's a lot more to do:
 - [ ] Zero-copy implementation.
 - [ ] LZO support.
 
+### Benchmarks
+
+There aren't any formal benchmarks yet. However with deflate on my early 2012 MBP, 98.4% of CPU time
+was spent in miniz producting ~125MB/s of decompressed data.
 
 ## Usage
 ```rust
