@@ -20,7 +20,7 @@ Unfortunately that means the API will change. If you depend on this crate, pleas
 for now.
 
 Currently supports reading out your garden-variety sequence file. Handles uncompressed sequencefiles
-as well as record compressed files (deflate only). The most common type of sequence file, block compressed,
+as well as record compressed files (deflate, gzip, and bzip2 only). The most common type of sequence file, block compressed,
 isn't supported yet.
 
 There's a lot more to do:
