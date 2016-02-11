@@ -56,7 +56,18 @@ let seqfile = match sequencefile::Reader::new(file) {
 }
 
 for kv in seqfile {
-    println!("{:?}", kv);
+    println!("{:?}", kv); // Some(([123, 123], [456, 456]))
+}
+
+// Until there's automatic deserialization, you can do something like this:
+// VERY hacky
+let kvs = seqfile.map(|e| e.unwrap()).map(|(key, value)| {
+    (BigEndian::read_i64(&key),
+     String::from_utf8_lossy(&value[2..value.len()]).to_string())
+});
+
+for (k,v) in kvs {
+  println!("key: {}, value: {}", k, v);
 }
 ```
 

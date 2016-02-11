@@ -10,6 +10,9 @@
 //!   Err(err) => panic!("Failed to open sequence file: {}", err),
 //! };
 //!
+//! // Returns a Result<(ByteString, ByteString)>, where a ByteString is a Vec<u8>
+//! // An Err from this will signal an unrecoverable error. Next call to Iterator
+//! // Returns None
 //! for kv in seqfile {
 //!     println!("{:?}", kv);
 //! }
