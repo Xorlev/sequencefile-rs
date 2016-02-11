@@ -10,7 +10,7 @@ Hadoop SequenceFile library for Rust
 ```toml
 # Cargo.toml
 [dependencies]
-sequencefile = "0.1.3"
+sequencefile = "0.1.4"
 ```
 
 ## Status
@@ -32,7 +32,7 @@ There's a lot more to do:
 - [X] Sequencefile metadata
 - [X] Better error handling
 - [X] Tests
-- [ ] Better error handling2
+- [X] Better error handling2
  - Iterator should return Result<(ByteString, ByteString)>
 - [ ] More tests
 - [ ] Better documentation
