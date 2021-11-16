@@ -18,14 +18,6 @@
 //! }
 //! ```
 
-#![crate_name = "sequencefile"]
-#![deny(missing_docs,
-        missing_debug_implementations, missing_copy_implementations,
-        trivial_casts, trivial_numeric_casts,
-        unsafe_code,
-        unstable_features,
-        unused_import_braces)]
-
 extern crate byteorder;
 extern crate bzip2;
 extern crate flate2;
@@ -70,5 +62,8 @@ mod util;
 pub mod reader;
 
 // exports
-pub use reader::*;
 pub use compress::{Codec, CompressionType};
+pub use reader::*;
+
+#[cfg(test)]
+pub mod tests;

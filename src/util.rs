@@ -1,10 +1,10 @@
-use std::io::Read;
 use errors::Result;
+use std::io::Read;
 
-pub trait ZeroCompress : Read {
+pub trait ZeroCompress: Read {
     fn decode_vint64(&mut self) -> Result<i64> {
         let mut raw_buffer = vec![0u8; 1];
-        try!(self.read_exact(&mut raw_buffer));
+        self.read_exact(&mut raw_buffer)?;
 
         let value = raw_buffer[0] as i8;
         let len = if value >= -112 {
@@ -23,9 +23,9 @@ pub trait ZeroCompress : Read {
         } else {
             // shifts buffer to make room for new set-o-bits, ors in the new byte
             for _ in 0..(len - 1) {
-                try!(self.read_exact(&mut raw_buffer));
-                val = val << 8;
-                val = val | (raw_buffer[0] as i64 & 0xFF)
+                self.read_exact(&mut raw_buffer)?;
+                val <<= 8;
+                val |= raw_buffer[0] as i64 & 0xFF
             }
         }
 
@@ -37,13 +37,12 @@ pub trait ZeroCompress : Read {
     }
 }
 
-impl<R> ZeroCompress for R where R: Read
-{}
+impl<R> ZeroCompress for R where R: Read {}
 
 #[cfg(test)]
 mod tests {
     use super::ZeroCompress;
-    use std::io::{Read, Cursor};
+    use std::io::Cursor;
 
     #[test]
     fn decodes_single_byte() {
@@ -58,7 +57,6 @@ mod tests {
 
         assert_eq!(8_405_037, buf.decode_vint64().unwrap());
     }
-
 
     #[test]
     fn decodes_multi_byte_negative() {
