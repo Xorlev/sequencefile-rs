@@ -64,3 +64,6 @@ pub mod reader;
 // exports
 pub use compress::{Codec, CompressionType};
 pub use reader::*;
+
+#[cfg(test)]
+pub mod tests;
