@@ -144,7 +144,7 @@ impl<R: io::Read> Iterator for Reader<R> {
 fn next_element<R: io::Read>(reader: &mut Reader<R>) -> Result<(ByteString, ByteString)> {
     if reader.block_buffer.is_empty() || reader.header.compression_type != CompressionType::Block {
         let mut last_sync_marker = [0; SYNC_SIZE];
-        let kv_length = reader.reader.read_i32::<BigEndian>()? as i64;
+        let mut kv_length = reader.reader.read_i32::<BigEndian>()? as i64;
 
         // handle sync marker
         if kv_length == -1 {
@@ -152,10 +152,17 @@ fn next_element<R: io::Read>(reader: &mut Reader<R>) -> Result<(ByteString, Byte
             if last_sync_marker.to_vec() != reader.header.sync_marker {
                 return Err(Error::SyncMarkerMismatch);
             }
+
+            if reader.header.compression_type == CompressionType::None {
+                kv_length = reader.reader.read_i32::<BigEndian>()? as i64;
+            }
         }
 
         if reader.header.compression_type != CompressionType::Block {
             let (key, value) = read_kv(kv_length as isize, &reader.header, &mut reader.reader)?;
+            if key.len() + value.len() != kv_length as usize {
+                panic!("inconsistent read");
+            }
             return Ok((key, value));
         }
     }

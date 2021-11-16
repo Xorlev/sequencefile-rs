@@ -55,6 +55,17 @@ fn read_checks_magic() {
     };
 }
 
+// #[test]
+// fn read_webgraph_nodes() {
+//     let reader = reader_for("test_data/nodes.seq").expect("cannot open sequence file");
+//     println!("{}", reader.header.key_class);
+//     println!("{}", reader.header.value_class);
+//     let mut output = File::create("keys.txt").expect("cannot open output file");
+//     for (key, _) in reader.flatten() {
+//         writeln!(output, "{:?}", OsStr::from_bytes(&key)).unwrap();
+//     }
+// }
+
 fn reader_for(filename: &str) -> Result<reader::Reader<File>> {
     let path = Path::new(filename);
     let file = File::open(&path)?;
