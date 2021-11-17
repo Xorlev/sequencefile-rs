@@ -57,6 +57,7 @@ pub struct Header {
 // modules
 mod compress;
 mod errors;
+mod text;
 mod util;
 
 pub mod reader;
@@ -64,6 +65,7 @@ pub mod reader;
 // exports
 pub use compress::{Codec, CompressionType};
 pub use reader::*;
+pub use text::*;
 
 #[cfg(test)]
 pub mod tests;
