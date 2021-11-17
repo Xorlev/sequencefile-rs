@@ -8,7 +8,10 @@ tests:
 release:
 	cargo build --all-targets --release
 
+doc:
+	cargo doc
+
 clean:
 	cargo clean
 
-all: clean lint tests release
+all: clean lint tests doc release
