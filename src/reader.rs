@@ -16,7 +16,10 @@ use {ByteString, Header};
 const MAGIC: &str = "SEQ";
 const SYNC_SIZE: usize = 16;
 
+/// Basic trait mapping hadoop.io.Writable abstract class
+/// Keys and Values types should implement this type to provide automatic deserialization
 pub trait Writable {
+    /// reads byte from buffer and converts to a concrete instance of Writable
     fn read(buf: &mut [u8]) -> Result<Self>
     where
         Self: Sized;
@@ -304,6 +307,10 @@ fn read_buf<R: io::Read>(reader: &mut R) -> Result<Vec<u8>> {
     Ok(key_buf)
 }
 
+/// Reads a vint (variable bit size int)
+///
+/// # Failures
+/// Returns an `Error` if reader is too small
 pub fn read_vint<R: io::Read>(reader: &mut R) -> Result<i32> {
     let first_byte = reader.read_i8()?;
 

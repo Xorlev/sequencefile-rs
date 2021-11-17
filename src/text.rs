@@ -5,16 +5,19 @@ use std::borrow::Cow;
 use std::io::Read;
 
 /// hadoop.io.Text
+#[derive(Debug)]
 pub struct Text {
     len: i32,
     buf: Vec<u8>,
 }
 
 impl Text {
+    /// Converts to String
     pub fn to_string(&self) -> Cow<str> {
         String::from_utf8_lossy(&self.buf)
     }
 
+    /// Tells if instance is an empty string or not
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
