@@ -55,7 +55,7 @@ fn read_checks_magic() {
     };
 }
 
-fn reader_for(filename: &str) -> Result<reader::Reader<File>> {
+fn reader_for(filename: &str) -> Result<reader::Reader<File, Vec<u8>, Vec<u8>>> {
     let path = Path::new(filename);
     let file = File::open(&path)?;
 
