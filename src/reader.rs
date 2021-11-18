@@ -9,6 +9,7 @@ use std::convert::TryInto;
 use std::io;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::io::Cursor;
 use std::str;
 use util::ZeroCompress;
 use {ByteString, Header};
@@ -20,14 +21,16 @@ const SYNC_SIZE: usize = 16;
 /// Keys and Values types should implement this type to provide automatic deserialization
 pub trait Writable {
     /// reads byte from buffer and converts to a concrete instance of Writable
-    fn read(buf: &mut [u8]) -> Result<Self>
+    fn read(buf: &mut impl io::Read) -> Result<Self>
     where
         Self: Sized;
 }
 
 impl Writable for Vec<u8> {
-    fn read(buf: &mut [u8]) -> Result<Self> {
-        Ok(buf.to_vec())
+    fn read(buf: &mut impl io::Read) -> Result<Self> {
+        let mut result = vec![];
+        buf.read_to_end(&mut result)?;
+        Ok(result)
     }
 }
 
@@ -224,10 +227,11 @@ fn next_element<R: io::Read, K: Writable, V: Writable>(
             for &len in lens.iter().take(kv_count) {
                 let mut v = vec![0; len]; //todo: reuse
                 c.read_exact(&mut v)?;
-
+                let mut v_cursor = Cursor::new(v);
+                let mut k_cursor = Cursor::new(keys.remove(0));
                 reader
                     .block_buffer
-                    .push((K::read(&mut keys.remove(0))?, V::read(&mut v)?));
+                    .push((K::read(&mut k_cursor)?, V::read(&mut v_cursor)?));
             }
         }
 
@@ -271,20 +275,26 @@ fn read_kv<R: io::Read, K: Writable, V: Writable>(
     let mut buffer = vec![0; kv_length as usize];
     reader.read_exact(&mut buffer)?;
 
-    let mut key = buffer[k_start..k_end].to_vec();
+    let key = buffer[k_start..k_end].to_vec();
 
     if header.compression_type == CompressionType::Record {
         if let Some(ref codec) = header.compression_codec {
-            let mut decompressed = compress::decompressor(codec, &buffer[v_start..v_end])?;
+            let decompressed = compress::decompressor(codec, &buffer[v_start..v_end])?;
 
-            Ok((K::read(&mut key)?, V::read(&mut decompressed)?))
+            Ok((
+                K::read(&mut Cursor::new(key))?,
+                V::read(&mut Cursor::new(decompressed))?,
+            ))
         } else {
             panic!("WAT")
         }
     } else {
-        let mut value = buffer[v_start..v_end].to_vec();
+        let value = buffer[v_start..v_end].to_vec();
 
-        Ok((K::read(&mut key)?, V::read(&mut value)?))
+        Ok((
+            K::read(&mut Cursor::new(key))?,
+            V::read(&mut Cursor::new(value))?,
+        ))
     }
 }
 
@@ -311,7 +321,7 @@ fn read_buf<R: io::Read>(reader: &mut R) -> Result<Vec<u8>> {
 ///
 /// # Failures
 /// Returns an `Error` if reader is too small
-pub fn read_vint<R: io::Read>(reader: &mut R) -> Result<i32> {
+pub fn read_vint(reader: &mut impl io::Read) -> Result<i32> {
     let first_byte = reader.read_i8()?;
 
     let len = decode_vint_size(first_byte);

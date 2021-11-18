@@ -67,14 +67,16 @@ pub struct Header {
 
 // modules
 mod compress;
-mod errors;
 mod text;
 mod util;
 
+/// Error
+pub mod errors;
 pub mod reader;
 
 // exports
 pub use compress::{Codec, CompressionType};
+pub use errors::*;
 pub use reader::*;
 pub use text::*;
 

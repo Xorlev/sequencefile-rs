@@ -2,7 +2,6 @@ use crate::errors::Result;
 use crate::{read_vint, Writable};
 
 use std::borrow::Cow;
-use std::io::Read;
 
 /// hadoop.io.Text
 #[derive(Debug)]
@@ -24,11 +23,10 @@ impl Text {
 }
 
 impl Writable for Text {
-    fn read(input: &mut [u8]) -> Result<Self> {
-        let mut reader = std::io::Cursor::new(input);
-        let len = read_vint(&mut reader)?;
+    fn read(input: &mut impl std::io::Read) -> Result<Self> {
+        let len = read_vint(input)?;
         let mut buf = vec![0; len as usize];
-        reader.read_exact(&mut buf)?;
+        input.read_exact(&mut buf)?;
         Ok(Self { len, buf })
     }
 }
