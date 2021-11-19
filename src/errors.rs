@@ -5,19 +5,30 @@ use std::{
     io, result, str,
 };
 
+/// convenience result type
 pub type Result<T> = result::Result<T, Error>;
 
+/// Error enum
 #[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum Error {
+    /// bad magic sequence
     BadMagic(String),
+    /// sequence file version not supported
     VersionNotSupported(u16),
+    /// unknown sequence type
     CompressionTypeUnknown(String),
+    /// unsupported coded
     UnsupportedCodec(String),
+    /// marker mismatch (file corrupted)
     SyncMarkerMismatch,
+    /// end of file
     EOF,
+    /// some IO error
     IO(io::Error),
+    /// unsupported encoding
     BadEncoding(str::Utf8Error),
+    /// unexpected decoder
     UnexpectedDecoder(byteorder::Error),
 }
 
