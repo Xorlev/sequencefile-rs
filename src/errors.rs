@@ -12,9 +12,9 @@ pub type Result<T> = result::Result<T, Error>;
 #[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum Error {
-    /// bad magique sequence
+    /// bad magic sequence
     BadMagic(String),
-    /// sequence file bersion not supported
+    /// sequence file version not supported
     VersionNotSupported(u16),
     /// unknown sequence type
     CompressionTypeUnknown(String),
