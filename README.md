@@ -1,10 +1,10 @@
-[![CircleCI](https://circleci.com/gh/Xorlev/rust-sequencefile/tree/master.svg?style=svg)](https://circleci.com/gh/Xorlev/rust-sequencefile/tree/master)
+[![CircleCI](https://circleci.com/gh/Xorlev/sequencefile-rs/tree/master.svg?style=svg)](https://circleci.com/gh/Xorlev/sequencefile-rs/tree/master)
 ![Crates.io](https://img.shields.io/crates/v/sequencefile)
 
-# rust-sequencefile
+# sequencefile-rs
 Hadoop SequenceFile library for Rust
 
-[Documentation](https://xorlev.github.io/rust-sequencefile/)
+[Documentation](https://docs.rs/sequencefile)
 
 ```toml
 # Cargo.toml
@@ -13,7 +13,7 @@ sequencefile = "0.2.0"
 ```
 
 ## Status
-Prototype status! I'm in the process of learning Rust. :) Feedback appreciated.
+Prototype status!
 
 Unfortunately that means the API will change. If you depend on this crate, please fully qualify your versions
 for now.
@@ -70,7 +70,7 @@ for (k,v) in kvs {
 ```
 
 ## License
-rust-sequencefile is primarily distributed under the terms of both the MIT license and the Apache License (Version 2.0),
+sequencefile-rs is primarily distributed under the terms of both the MIT license and the Apache License (Version 2.0),
 with portions covered by various BSD-like licenses.
 
 See LICENSE-APACHE, and LICENSE-MIT for details.
