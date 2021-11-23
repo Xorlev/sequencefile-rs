@@ -1,5 +1,5 @@
 [![CircleCI](https://circleci.com/gh/Xorlev/sequencefile-rs/tree/master.svg?style=svg)](https://circleci.com/gh/Xorlev/sequencefile-rs/tree/master)
-![Crates.io](https://img.shields.io/crates/v/sequencefile)
+[![Crates.io](https://img.shields.io/crates/v/sequencefile)](https://crates.io/crates/sequencefile)
 
 # sequencefile-rs
 Hadoop SequenceFile library for Rust
