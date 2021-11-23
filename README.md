@@ -10,7 +10,7 @@ Hadoop SequenceFile library for Rust
 ```toml
 # Cargo.toml
 [dependencies]
-sequencefile = "0.1.4"
+sequencefile = "0.2.0"
 ```
 
 ## Status
@@ -32,13 +32,11 @@ There's a lot more to do:
 - [X] Better error handling
 - [X] Tests
 - [X] Better error handling2
- - Iterator should return Result<(ByteString, ByteString)>
 - [ ] More tests
 - [ ] Better documentation
 - [ ] Snappy support
 - [ ] CRC file support
-- [ ] 'Writables', e.g. generic deserialization for common Hadoop writable types
- - TODO: "Reflection" of some sort to allow registration of custom types.
+- [X] 'Writables', e.g. generic deserialization for common Hadoop writable types
 - [ ] Writer
 - [ ] Gracefully handle version 4 sequencefiles
 - [ ] Zero-copy implementation.
@@ -47,17 +45,14 @@ There's a lot more to do:
 ### Benchmarks
 
 There aren't any formal benchmarks yet. However with deflate on my early 2012 MBP, 98.4% of CPU time
-was spent in miniz producting ~125MB/s of decompressed data.
+was spent in miniz producing ~125MB/s of decompressed data.
 
 ## Usage
 ```rust
 let path = Path::new("/path/to/seqfile");
 let file = File::open(&path).unwrap();
 
-let seqfile = match sequencefile::Reader::new(file) {
-  Ok(val) => val,
-  Err(err) => panic!("Failed to open sequence file: {}", err),
-}
+let seqfile = sequencefile::Reader::new(file).expect("Failed to open sequence file.");
 
 for kv in seqfile {
     println!("{:?}", kv); // Some(([123, 123], [456, 456]))

@@ -1,6 +1,6 @@
 [package]
 name = "sequencefile"
-version = "0.1.4"
+version = "0.2.0"
 authors = ["Michael Rose <elementation@gmail.com>"]
 keywords = ["hadoop", "sequencefile", "decoding"]
 homepage = "https://github.com/xorlev/rust-sequencefile.git"
