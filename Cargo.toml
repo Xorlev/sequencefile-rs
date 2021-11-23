@@ -3,9 +3,9 @@ name = "sequencefile"
 version = "0.2.0"
 authors = ["Michael Rose <elementation@gmail.com>"]
 keywords = ["hadoop", "sequencefile", "decoding"]
-homepage = "https://github.com/xorlev/rust-sequencefile.git"
-repository = "https://github.com/xorlev/rust-sequencefile.git"
-documentation = "https://xorlev.github.io/rust-sequencefile/"
+homepage = "https://github.com/xorlev/sequencefile-rs"
+repository = "https://github.com/xorlev/sequencefile-rs.git"
+documentation = "https://docs.rs/sequencefile"
 license = "MIT/Apache-2.0"
 description = """
 Native Rust library for working with Hadoop sequence files. Only handles reading currently.
