@@ -1,6 +1,5 @@
-[![Build Status](https://travis-ci.org/Xorlev/rust-sequencefile.svg?branch=master)](https://travis-ci.org/Xorlev/rust-sequencefile)
-[![crates.io](http://meritbadge.herokuapp.com/sequencefile)](https://crates.io/crates/sequencefile)
-[![Coverage Status](https://coveralls.io/repos/github/Xorlev/rust-sequencefile/badge.svg?branch=master)](https://coveralls.io/github/Xorlev/rust-sequencefile?branch=master)
+[![CircleCI](https://circleci.com/gh/Xorlev/rust-sequencefile/tree/master.svg?style=svg)](https://circleci.com/gh/Xorlev/rust-sequencefile/tree/master)
+![Crates.io](https://img.shields.io/crates/v/sequencefile)
 
 # rust-sequencefile
 Hadoop SequenceFile library for Rust
