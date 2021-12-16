@@ -43,29 +43,32 @@ There's a lot more to do:
 
 ### Benchmarks
 
-There aren't any formal benchmarks yet. However with deflate on my early 2012 MBP, 98.4% of CPU time
-was spent in miniz producing ~125MB/s of decompressed data.
+There are only two benchmarks yet. Those two benchmarks read seq files (1000 entries each) generated in java with no compression. Both have Text as keyclass. First has i64 as valueclass, second has some more complex structure. 
+Earlier investigations (with deflate on an early 2012 MBP) showed 98.4% of CPU time was spent in miniz producing ~125MB/s of decompressed data.
 
 ## Usage
 ```rust
-let path = Path::new("/path/to/seqfile");
-let file = File::open(&path).unwrap();
+use sequencefile::Writable;
+let file = File::open("/path/to/seqfile").expect("cannot open file");
 
-let seqfile = sequencefile::Reader::new(file).expect("Failed to open sequence file.");
-
-for kv in seqfile {
-    println!("{:?}", kv); // Some(([123, 123], [456, 456]))
+struct ValueClass {
+  // some fields
 }
 
-// Until there's automatic deserialization, you can do something like this:
-// VERY hacky
-let kvs = seqfile.map(|e| e.unwrap()).map(|(key, value)| {
-    (BigEndian::read_i64(&key),
-     String::from_utf8_lossy(&value[2..value.len()]).to_string())
-});
+impl Writable for ValueClass {
+   fn read(buf: &mut impl std::io::Read) -> sequencefile::Result<Self>
+    where
+        Self: Sized,
+    {
+      // implement read function
+    }
+}
 
-for (k,v) in kvs {
-  println!("key: {}, value: {}", k, v);
+let seqfile = sequencefile::Reader::<File, Text, ValueClass>::new(file).expect("cannot open reader");
+
+for kv in seqfile.flatten() {
+
+    println!("{:?} - {:?}", kv.0, kv.1);
 }
 ```
 
