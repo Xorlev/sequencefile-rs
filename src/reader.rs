@@ -12,27 +12,12 @@ use std::io::BufReader;
 use std::io::Cursor;
 use std::str;
 use util::ZeroCompress;
+
+use crate::writable::Writable;
 use {ByteString, Header};
 
 const MAGIC: &str = "SEQ";
 const SYNC_SIZE: usize = 16;
-
-/// Basic trait mapping hadoop.io.Writable abstract class
-/// Keys and Values types should implement this type to provide automatic deserialization
-pub trait Writable {
-    /// reads byte from buffer and converts to a concrete instance of Writable
-    fn read(buf: &mut impl io::Read) -> Result<Self>
-    where
-        Self: Sized;
-}
-
-impl Writable for Vec<u8> {
-    fn read(buf: &mut impl io::Read) -> Result<Self> {
-        let mut result = vec![];
-        buf.read_to_end(&mut result)?;
-        Ok(result)
-    }
-}
 
 /// Provides a streaming interface fronted by an Iterator
 /// Only buffers when `CompressionType::Block` is used.

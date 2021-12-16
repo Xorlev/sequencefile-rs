@@ -14,4 +14,7 @@ doc:
 clean:
 	cargo clean
 
-all: clean lint tests doc release
+bench:
+	cargo bench
+
+.PHONY: clean lint tests doc release bench

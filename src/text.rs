@@ -1,7 +1,6 @@
-use crate::errors::Result;
-use crate::{read_vint, Writable};
-
 use std::borrow::Cow;
+
+use crate::{errors::Result, read_vint, writable::Writable};
 
 /// hadoop.io.Text
 #[derive(Debug)]
