@@ -34,7 +34,7 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-        match *self {
+        match &*self {
             Error::BadMagic(ref m) => {
                 write!(
                     f,
@@ -42,7 +42,7 @@ impl fmt::Display for Error {
                     m
                 )
             }
-            Error::IO(_) => write!(f, "i/o error: {}", self),
+            Error::IO(io) => write!(f, "i/o error: {}", io),
             Error::VersionNotSupported(ref v) => write!(f, "unexpected version: '{}'", v),
             Error::SyncMarkerMismatch => write!(f, "sync marker mismatch"),
             Error::EOF => write!(f, "end of file"),

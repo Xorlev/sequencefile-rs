@@ -15,3 +15,13 @@ Native Rust library for working with Hadoop sequence files. Only handles reading
 byteorder = "0.4"
 flate2 = "0.2"
 bzip2 = "0.2"
+
+[dev-dependencies]
+criterion = "0.3.4"
+
+[[bench]]
+name = "lib_bench"
+harness = false
+
+[profile.bench]
+debug = true

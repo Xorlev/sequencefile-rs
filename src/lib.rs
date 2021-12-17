@@ -73,6 +73,8 @@ mod util;
 /// Error
 pub mod errors;
 pub mod reader;
+/// writable trait and some implementations
+pub mod writable;
 
 // exports
 pub use compress::{Codec, CompressionType};
